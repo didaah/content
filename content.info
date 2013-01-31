@@ -1,0 +1,9 @@
+<?php
+// $Id$
+$info = array(
+  'name' => '内容',
+  'description' => '提供完善的内容管理功能',
+  'ver' => '1.0',
+  'dependencies' => array('comment'),
+  'language' => 'zh-hans',
+);

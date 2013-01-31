@@ -1,0 +1,968 @@
+<?php
+// $Id$
+
+// public content_get_default_table() {{{ 
+/**
+ * content_get_default_table
+ * 内容存储数据表结构。每添加一个内容类型，将创建一个表（表名如：content_test）
+ * 
+ * @access public
+ * @return array
+ */
+function content_get_default_table() {
+  return array(
+    'description' => '',
+    'fields' => array(
+      'nid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => '标题',
+      ),
+      'body' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => '内容'
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => '创建用户 id',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'size' => 'tiny',
+        'default' => 1,
+        'description' => '状态, 0：隐藏，1、正常',
+      ),
+      'comment_count' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => '评论数量',
+      ),
+      'format' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => '输入格式',
+      ),
+      'visit' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => '浏览计数',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => '创建时间',
+      ),
+      'updated' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => '更新时间',
+      ),
+    ),
+    'indexes' => array(
+      'sc' => array('status', 'created'),
+      'su' => array('status', 'updated'),
+      'scc' => array('status', 'comment_count'),
+      'sv' => array('status', 'visit'),
+      'uu' => array('uid', 'updated'),
+      'uc' => array('uid', 'comment_count'),
+      'uv' => array('uid', 'visit'),
+    ),
+    'primary key' => array('nid'),
+  );
+}
+// }}}
+
+/**
+ * @Implement of hook_menu()
+ */
+function content_menu() {
+  $items = array();
+  
+  $items['admin/content/list/%'] = array(
+    'description' => '内容管理',
+    'load_functions' => array(3 => array('content_type_load')),
+    'access_arguments' => array('admin content view'),
+    'page_callback' => 'content_admin_list',
+    'page_arguments' => array(3),
+    'file' => 'content.admin.inc',
+  );
+  
+  $items['content/add/%'] = array(
+    'title' => '添加内容',
+    'load_functions' => array(2 => array('content_type_load')),
+    'access_callback' => 'content_is_create',
+    'access_arguments' => array(2),
+    'page_callback' => 'dd_get_form',
+    'page_arguments' => array('content_form', 2),
+    'file' => 'content.form.inc',
+  );
+  
+  $items['content/%/%/edit'] = array(
+    'description' => '编辑内容',
+    'load_functions' => array(1 => array('content_type_load'), 2 => array('content_load', 1)),
+    'access_callback' => 'content_is_update',
+    'access_arguments' => array(1, 2),
+    'page_callback' => 'dd_get_form',
+    'page_arguments' => array('content_form', 1, 2),
+    'file' => 'content.form.inc',
+  );
+   
+  $items['content/%/%/delete'] = array(
+    'description' => '删除内容',
+    'load_functions' => array(1 => array('content_type_load'), 2 => array('content_load', 1)),
+    'access_callback' => 'content_is_delete',
+    'access_arguments' => array(1, 2),
+    'page_callback' => 'dd_get_form',
+    'page_arguments' => array('content_delete_form', 1, 2),
+    'file' => 'content.form.inc',
+  );
+  
+  $items['content/%/%'] = array(
+    'description' => '内容浏览',
+    'load_functions' => array(1 => array('content_type_load'), 2 => array('content_load', 1)),
+    'access_callback' => 'content_is_view',
+    'access_arguments' => array(1, 2),
+    'page_callback' => 'content_page',
+    'page_arguments' => array(1, 2),
+    'file' => 'content.page.inc',
+  );
+   
+  $items['content/type/%'] = array(
+    'description' => '按类型浏览',
+    'load_functions' => array(2 => array('content_type_load')),
+    'access_callback' => 'content_is_type_view',
+    'access_arguments' => array(2),
+    'page_callback' => 'content_page_type',
+    'page_arguments' => array(2),
+    'file' => 'content.page.inc',
+  );
+   
+  $items['admin/content/type'] = array(
+    'title' => '内容类型',
+    'access_arguments' => array('admin content type'),
+    'page_callback' => 'content_admin_type',
+    'file' => 'content.field.inc'
+  );
+ 
+  return $items; 
+}
+
+/**
+ * @Implement of hook_perm()
+ */
+function content_perm() {
+  $perm = array(
+    'admin content view' => '内容管理',
+    'admin content type' => '内容类型管理',
+  );
+
+  if ($data = content_get_type_by_type()) {
+    foreach ($data as $o) {
+      $perm['content ' . $o->type . ' view'] = '浏览 ' . $o->name;
+      $perm['content ' . $o->type . ' create'] = '创建 ' . $o->name;
+      $perm['content ' . $o->type . ' update own'] = '编辑自己添加的 ' . $o->name;
+      $perm['content ' . $o->type . ' update'] = '编辑全部 ' . $o->name;
+      $perm['content ' . $o->type . ' delete own'] = '删除自己添加的 ' . $o->name;
+      $perm['content ' . $o->type . ' delete'] = '删除全部 ' . $o->name;
+      if ($o->data['comment']) {
+        $perm['content ' . $o->type . ' comment view'] = '浏览 ' . $o->name . ' 评论';
+        $perm['content ' . $o->type . ' comment create'] = '发布 ' . $o->name . ' 评论';
+        $perm['content ' . $o->type . ' comment update'] = '编辑所有 ' . $o->name . ' 评论';
+        $perm['content ' . $o->type . ' comment update own'] = '编辑自己发布的 ' . $o->name . ' 评论';
+        $perm['content ' . $o->type . ' comment delete'] = '删除所有 ' . $o->name . ' 评论';
+        $perm['content ' . $o->type . ' comment delete own'] = '删除自己发布的 ' . $o->name . ' 评论';
+      }
+    }
+  }
+
+  return $perm;
+}
+
+// public content_is_create($type) {{{ 
+/**
+ * content_is_create
+ *  判断创建内容权限
+ * 
+ * @param object $type 
+ * @access public
+ * @return bool
+ */
+function content_is_create($type) {
+  if (user_access('content ' . $type->type . ' create')) {
+    $type->is_create = true;
+    // 若将 $type->is_create 设为 false，则不允许创建内容
+    module_invoke_all('content_is_create', $type);
+    return $type->is_create;
+  }
+}
+// }}}
+
+// public content_is_view($type, $content) {{{ 
+/**
+ * content_is_view
+ * 判断浏览权限
+ * 
+ * @param object $type 
+ * @param object $content 
+ * @access public
+ * @return bool
+ */
+function content_is_view($type, $content) {
+  if ($content->status > 0 && user_access('content ' . $type->type . ' view')) { 
+    $content->is_view = true;
+    // 若将 $content->is_view 设为 false，则不允许浏览
+    module_invoke_all('content_is_view', $content);  
+    return $content->is_view;
+  }
+}
+// }}}
+
+// public content_is_update($type, $content) {{{ 
+/**
+ * content_is_update
+ *  判断编辑内容权限
+ * 
+ * @param object $type 
+ *  一条内容类型记录
+ * @param object $content 
+ *  一条内容记录
+ * @access public
+ * @return bool
+ */
+function content_is_update($type, $content) {
+  if (user_access('content ' . $type->type . ' update') || 
+  (user_access('content ' . $type->type . ' update own') && $GLOBALS['user']->uid == $content->uid)) {
+    $content->is_update = true;
+    // 若将 $content->is_udpate 设为 false，则不允许编辑
+    module_invoke_all('content_is_update', $content);  
+    return $content->is_update;
+  }
+}
+// }}}
+
+// public content_is_delete($type, $content) {{{ 
+/**
+ * content_is_delete
+ *  判断删除内容权限
+ * 
+ * @param object $type 
+ *  一条内容类型记录
+ * @param object $content 
+ *  一条内容记录
+ * @access public
+ * @return bool
+ */
+function content_is_delete($type, $content) {
+  if (user_access('content ' . $type->type . ' delete') || 
+  (user_access('content ' . $type->type . ' delete own') && $GLOBALS['user']->uid == $content->uid)) {
+    $content->is_delete = true;
+    // 若将 $content->is_delete 设为 false，则不允许删除
+    module_invoke_all('content_is_delete', $content);  
+    return $content->is_delete;
+  }
+}
+// }}}
+
+/**
+ * @Implement of hook_system_admin_menus()
+ */
+function content_system_admin_menus() {
+  $menu = array(array(), t('content', '内容'));
+
+  if ($data = content_get_type_by_type()) {
+    foreach ($data as $o) {
+      $menu[0][] = array(t('content', '!name管理', array('!name' => $o->name)), 'admin/content/list/' . $o->type);
+    }
+  }
+
+  $menu[0][] = array(t('content', '内容类型'), 'admin/content/type');
+
+  return $menu;
+}
+
+/**
+ * @Implement of hook_field_term_view()
+ */
+function content_field_term_view($term) {
+  dd_set_title(array($term->field->name, $term->name));
+  dd_set_breadcrumb(array(l($term->field->name, 'fields/' . $term->field->field_id), $term->name));
+  return article_list_summary(NULL, $term->tid);
+}
+
+/**
+ * @Implement of hook_field_view()
+ */
+function content_field_view($field) {
+  dd_set_title(array($field->name));
+  dd_set_breadcrumb(array($field->name));
+  return article_list_summary($field->field_id);
+}
+
+// public content_type_load($tid) {{{ 
+/**
+ * content_type_load
+ * 根据 tid 或 type 加载一个内容类型
+ * 
+ * @param int|string $data
+ *  内容类型的 tid 或 type
+ * @access public
+ * @return void
+ */
+function content_type_load($data) {
+  $type = NULL;
+
+  if (is_numeric($data)) {
+    $type = content_get_type_by_tid($data);
+  } else {
+    $type = content_get_type_by_type($data);
+  }
+
+  if ($type) module_invoke_all('content_type_load', $type);
+
+  return $type;
+}
+// }}}
+
+// public content_type_delete($type) {{{ 
+/**
+ * content_type_delete
+ * 删除一个内容类型
+ * 
+ * @param object $type 
+ *  一条类型记录
+ * @access public
+ * @return bool
+ */
+function content_type_delete($type) {
+  // 即将删除
+  module_invoke_all('content_type_before_delete', $type);
+  
+  $table = 'content_ext_' . $type->type;
+
+  // 删除内容数据表
+  if (db_is_table($table) && !db_drop_table($table)) {
+    dd_set_message(t('content', '数据表 !name 删除失败，请手动删除', array('!name' => $table)), 'error');
+  }
+
+  if (db_exec('DELETE FROM {content_type} WHERE tid = ?', array($type->tid))) {
+    // 删除类型属性
+    field_group_delete('content', 'ext_' . $type->type);
+    // 清除缓存
+    content_system_cache_clear('submit', array('value' => array('content_type' => true)));
+    module_invoke_all('content_type_delete', $type);
+    return true;
+  }
+
+  return false;
+}
+// }}}
+
+// public content_type_alidate($v, &$form = NULL) {{{ 
+/**
+ * content_type_alidate
+ * 验证内容类型
+ * 
+ * @param object $v 
+ *  一条内容类型记录
+ * @param array $form 
+ *  表单对象
+ * @access public
+ * @return bool|array 通过验证则返回 false，未通过返回错误信息
+ */
+function content_type_validate($v, &$form = NULL) {
+  $e = NULL;
+  
+  if (mb_strlen($v->name) > 30) {
+    $e['name']['#error'][] = t('content', '名称长度不超过 30 个字符');
+  } else if (db_query('SELECT tid FROM {content_type} WHERE name = ? AND tid != ?',
+  array($v->name, $v->tid), array('return' => 'column'))) {
+    $e['name']['#error'][] = t('content', '类型名称已经存在，请换一个试试');
+  } else if (!empty($v->type)) {
+    if (preg_match('/[^0-9|a-z]/', $v->type)) {
+      $e['type']['#error'][] = t('content', '系统名称只能是数字和小写字母');
+    } else if (strlen($v->type) > 12) {
+      $e['type']['#error'][] = t('content', '长度不超过 12 个字符');
+    } else if (db_query('SELECT tid FROM {content_type} WHERE type = ? AND tid != ?',
+    array($v->type, $v->tid), array('return' => 'column'))) {
+      $e['type']['#error'][] = t('content', '系统名称已经存在，请换一个试试');
+    }
+  }
+
+  if (empty($e)) module_invoke_all('content_type_validate', $v, $form);
+  
+  return $e;
+}
+// }}}
+
+// public content_type_save($v, &$form = NULL) {{{ 
+/**
+ * content_type_save
+ * 保存内容类型
+ * 
+ * @param object $v 
+ * @param array $form 
+ * @access public
+ * @return false|object
+ */
+function content_type_save($v, &$form = NULL) {
+  if (!empty($v->tid)) {
+    $args = array('tid');
+    unset($v->type); // type 不允许修改
+  } else {
+    $args = NULL;
+  }
+  
+  if (db_write_record('content_type', $v, $args)) {
+    if (!empty($v->type) && !content_create_table($v)) {
+      dd_set_message(t('content', '数据表未能创建成功，请再次编辑，尝试重新创建'), 'error');
+    } else {
+      // 清除缓存
+      content_system_cache_clear('submit', array('value' => array('content_type' => true)));
+      module_invoke_all('content_type_save', $type, $form);
+      dd_set_message(t('content', '操作成功'));
+      return true;
+    }
+  }
+  return false;
+}
+// }}}
+
+// public content_create_table($type) {{{ 
+/**
+ * content_create_table
+ *  为内容类型创建存储表，如果表已经存在，则不再创建
+ * 
+ * @param object $type 
+ * @access public
+ * @return bool
+ */
+function content_create_table($type) {
+  $table = 'content_ext_' . $type->type;
+  if (db_is_table($table)) {
+    return true;
+  } else if ($query = db_create_table($table, content_get_default_table())) {
+    dd_set_message(implode('<br/>', $query));
+    return true;
+  }
+  return false;
+}
+// }}}
+
+// public content_load($type, $nid) {{{ 
+/**
+ * content_load
+ * 根据 type 和 nid 加载一个内容对象
+ * 
+ * @param int $nid
+ *  内容 nid
+ * @param string $type
+ *  内容类型
+ * @access public
+ * @return object
+ */
+function content_load($nid, $type) {
+  static $content;
+  
+  $key = $nid . $type;
+
+  if (!isset($content[$key])) {
+    if ($content[$key] = db_query('SELECT n.*, u.name FROM {content_ext_' . $type . '} n INNER JOIN {users} u 
+    ON n.uid = u.uid WHERE n.nid = ?', array($nid), array('return' => 'one'))) {
+      $content[$key]->type = $type;
+      $content[$key]->table = 'content_ext_' . $type;
+      $content[$key]->path = url('content/' . $type . '/' . $nid);
+      // 类型扩展属性
+      field_get_node_load('content', 'ext_' . $type, $content[$key]);
+      module_invoke_all('content_load', $content[$key]);
+    }
+  }
+  
+  return $content[$key];
+}
+// }}}
+
+// public content_delete($type, $nid) {{{ 
+/**
+ * content_delete
+ *  删除一条内容
+ * 
+ * @param string $type 
+ *  内容类型
+ * @param int $nid 
+ *  内容 id
+ * @access public
+ * @return bool
+ */
+function content_delete($type, $nid) {
+  if ($content = content_load($type, $nid)) {
+    if (db_exec('DELETE FROM {content_ext_' . $type . '} WHERE nid = ?', array($nid))) {
+
+      // 将内容所关联的文件状态设置为 0，待系统自行删除
+      db_exec('UPDATE {files} SET status = 0 WHERE ext_type = ? AND ext_id = ?', 
+      array('content_' . $type, $nid));
+      
+      // 删除内容扩展字段
+      field_get_node_load('content', 'ext_' . $type, $content);
+
+      module_alter_all('content_delete', $content);
+      
+      return true;
+    }
+  }
+}
+// }}}
+
+// public content_validate($content, &$form = NULL) {{{ 
+/**
+ * content_validate
+ * 验证一条内容记录
+ * 
+ * @param object $content 
+ *  待验证的内容
+ * @param array $form 
+ *  若通过表单提交，表单对象
+ * @access public
+ * @return bool|array 验证通过则返回 false，未通过返回一个适用 form 的错误信息数组
+ */
+function content_validate($content, &$form = NULL) {
+  $e = NULL;
+  
+  if (mb_strlen($content->title) > 255) {
+    $e['title']['#error'][] = t('content', '长度不能大于 255 个字符');
+  } else if (!$e = field_get_node_validate('content', 'ext_' . $content->type, $content)) {
+    $e = module_invoke_all('content_validate', $content, $form);
+  } else {
+    return false;
+  }
+
+  return $e;
+}
+// }}}
+
+/**
+ * 保存一条文章
+ * @param (object) $article
+ * 	文章记录，若有 nid，则更新记录
+ * @param (bool) $validate
+ * 	是否验证文章
+ * @return (false|true) &$error 为验证错误信息
+ */
+function content_save($content, $validate = true, &$error = NULL) {
+  if ($validate && $error = content_validate($content)) {
+    return false;
+  }
+  
+  if (!empty($content->nid)) {
+    $args = array('nid');
+    $content->updated = time();
+    $content->is_insert = false;
+  } else {
+    $args = NULL;
+    if (empty($content->created)) $content->created = time();
+    if (empty($content->updated)) $content->updated = time();
+    if (empty($content->uid)) $content->uid = $GLOBALS['user']->uid;
+    $content->is_insert = true;
+  }
+  
+  if (db_write_record('content_ext_' . $content->type, $content, $args)) {
+    // 扩展属性
+    field_get_node_save('content', 'ext_' . $content->type, $content);
+
+    content_set_type_count($content->type);
+
+    module_invoke_all('content_save', $content);
+    return true;
+  }
+}
+
+// public content_set_type_count($type) {{{ 
+/**
+ * content_set_type_count
+ * 更新类型总内容数量
+ * 
+ * @param string $type 
+ * @access public
+ * @return int 内容总数量
+ */
+function content_set_type_count($type) {
+  $count = db_query('SELECT COUNT(nid) FROM {content_ext_' . $type . '} WHERE status > 0',
+  array(), array('return' => 'column'));
+
+  db_exec('UPDATE {content_type} SET count = ? WHERE type = ?', array($count, $type));
+
+  // 更新类型缓存 
+  content_system_cache_clear('submit', array('value' => array('content_type' => true)));
+
+  return $count;
+}
+// }}}
+
+// public content_set_comment_count($type, $nid) {{{ 
+/**
+ * content_set_comment_count
+ * 更新内容评论总数量
+ * 
+ * @param string $type 
+ *  内容类型 type
+ * @param int $nid 
+ *  内容 nid
+ * @access public
+ * @return int 评论总数量
+ */
+function content_set_comment_count($type, $nid) {
+  $count = db_query('SELECT COUNT(cid) FROM {comment} WHERE ext_type =? AND status > 0 AND ext_id = ?',
+  array('content_' . $type, $nid), array('return' => 'column'));
+  db_exec('UPDATE {content_ext_' . $type . '} SET comment_count = ? WHERE nid = ?', array($count, $nid));
+  return $count;
+}
+// }}}
+
+/**
+ * @Implement of hook_theme()
+ */
+function content_theme() {
+  return array(
+    'content' => array(
+      'tpl' => 'content.tpl.php',
+      'description' => '内容浏览模板',
+      'args' => array('content'),
+    ),
+    'content_type' => array(
+      'tpl' => 'content_type.tpl.php',
+      'description' => '类型列表模板',
+      'args' => array('type'),
+    ),
+  );
+}
+
+/**
+ * @Implement of hook_template_preprocess_x()
+ * 
+ * 内容可按 type/nid 创建模板文件：
+ * content_{$content->type}_{$content->nid}.tpl.php
+ * content_{$content->type}.tpl.php
+ * content.tpl.php
+ * 
+ */
+function content_template_preprocess_content(&$var, $hook) {
+  if (isset($var['content']) && $var['content']->type) {
+    $var['theme_config']->tpl[] = 'content_' . $var['content']->type . '_' . $var['content']->nid . '.tpl.php';
+    $var['theme_config']->tpl[] = 'content_' . $var['content']->type . '.tpl.php';
+  } 
+}
+
+/**
+ * @Implement of hook_template_preprocess_x()
+ * 
+ * 类型列表可按 type 创建模板文件：
+ * article_type_{$type->type}.tpl.php
+ * article_type.tpl.php
+ * 
+ */
+function content_template_preprocess_content_type(&$var, $hook) {
+  if (isset($var['type']) && $var['type']->type) {
+    $var['theme_config']->tpl[] = 'content_type_' . $var['type']->type . '.tpl.php';
+  } 
+}
+
+// public content_get_type_by_tid($tid = NULL) {{{ 
+/**
+ * content_get_type_by_tid
+ * 获取所有或指定类型
+ * @param string $tid
+ *  按 tid 获取类型
+ * @access public
+ * @return array|object
+ */
+function content_get_type_by_tid($tid = NULL) {
+  static $data;
+
+  if (!isset($data)) {
+    if ($cache = cache_get('content_get_type_by_tid')) {
+      $data = $cache->data;
+    } else  {
+      $data = array();
+      if ($fetch = db_query('SELECT * FROM {content_type}')) {
+        foreach ($fetch as $o) {
+          $o->data = unserialize($o->data);
+          $data[$o->tid] = $o;
+        }
+      }
+      cache_set('content_get_type_by_tid', $data);
+    }
+  }
+
+  return empty($tid) ? $data : $data[$tid];
+}
+// }}}
+
+// public content_get_type_by_type($type = NULL) {{{ 
+/**
+ * content_get_type_by_type
+ * 获取所有或指定类型
+ * @param string $type
+ *  按 type 获取类型
+ * @access public
+ * @return array|object
+ */
+function content_get_type_by_type($type = NULL) {
+  static $data;
+
+  if (!isset($data)) {
+    if ($cache = cache_get('content_get_type_by_type')) {
+      $data = $cache->data;
+    } else  {
+      $data = array();
+      if ($fetch = db_query('SELECT * FROM {content_type}')) {
+        foreach ($fetch as $o) {
+          $o->data = unserialize($o->data);
+          $data[$o->type] = $o;
+        }
+      }
+      cache_set('content_get_type_by_type', $data);
+    }
+  }
+
+  return empty($type) ? $data : $data[$type];
+}
+// }}}
+
+/**
+ * @Implement of hook_system_cache_clear()
+ */
+function content_system_cache_clear($op = 'list', $v = NULL) {
+  switch ($op) {
+    case 'list':
+    return array(
+      'content_type' => '清除内容类型缓存',
+    );
+    case 'submit':
+      if (!empty($v['value']['content_type'])) {
+        cache_del('cid', 'content_get_type_by_type');
+        cache_del('cid', 'content_get_type_by_tid');
+        cache_del('*', 'admin_menus_'); // 需要清除 admin_menus
+      }
+  }
+}
+
+/**
+ * @Implement of hook_field_call_group()
+ */
+function content_field_call_group($type = NULL) {
+  $groups = array();
+  
+  // 内容类型扩展属性
+  if ($fetch = content_get_type_by_tid()) {
+    foreach ($fetch as $o) {
+      $groups['ext_' . $o->type] = array(
+        'title' => t('content', '!name属性', array('!name' => $o->name)),
+        'fieldset' => true,
+      );
+    }
+  }
+  
+  return $type ? $groups[$type] : $groups;
+}
+
+/**
+ * @Implement of hook_comment_info()
+ */
+function content_comment_info() {
+  $types = array();
+  if ($data = content_get_type_by_type()) {
+    foreach ($data as $o) {
+      $types['content_' . $o->type] = array(
+        'name' => t('content', '!name评论', array('!name' => $o->name)),
+        'default_status' => 1,
+        'user_anonymous' => true, // 默认匿名评论设置打开
+        'editor' => true, // 默认使用编辑器，由管理员自行设置
+      );
+    }
+  }
+  return $types;
+}
+
+// public content_get_comment_type($ext_type) {{{ 
+/**
+ * content_get_comment_type
+ * 根据评论 ext_type，获取到内容类型 type
+ * 
+ * @param string $ext_type 
+ *  评论 ext_type
+ * @access public
+ * @return object 一个内容类型对象
+ */
+function content_get_comment_type($ext_type) {
+  static $data;
+  if (!isset($data[$ext_type])) {
+    if (substr($ext_type, 0, 8) == 'content_') {
+      $data[$ext_type] = content_get_type_by_type(substr($ext_type, 8));
+    } else {
+      $data[$ext_type] = false;
+    }
+  }
+  return $data[$ext_type];
+}
+// }}}
+
+/**
+ * @Implement of hook_comment_goto()
+ */
+function content_comment_goto($comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    return 'content/' . $data->type . '/' . $comment->ext_id;
+  }
+}
+
+/**
+ * @Implement of hook_comment_delete()
+ */
+function content_comment_delete($comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    dd_log(
+      'content_' . $data->type,
+      t('content', '删除回复，ID：!id', array('!id' => $comment->cid)),
+      $comment->ext_id2,
+      'content/' . $data->type . '/' . $comment->ext_id
+    );
+    content_set_comment_count($data->type, $comment->ext_id);
+    $comment->redirect = 'content/' . $type . '/' . $comment->ext_id;
+  }
+}
+
+/**
+ * @Implement of hook_comment_save()
+ */
+function content_comment_save($comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    content_set_comment_count($data->type, $comment->ext_id);
+  }
+}
+
+/**
+ * @Implement of hook_comment_is_delete()
+ */
+function content_comment_is_delete($comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    if (user_access('content ' . $data->type . ' comment delete')) {
+      // 拥有删除所有评论的权限
+      $comment->is_delete = true;
+    } else if (user_access('content ' . $data->type . ' comment delete own') && $content = content_load($comment->ext_id, $data->type)) {
+      // 拥有删除自己评论的权限
+      $comment->is_delete = $GLOBALS['user']->uid == $content->uid;
+    }
+  }
+}
+
+/**
+ * @Implement of hook_comment_is_update()
+ */
+function content_comment_is_update($comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    if (user_access('content ' . $data->type . ' comment udpate')) {
+      // 拥有编辑所有评论的权限
+      $comment->is_update = true;
+    } else if (user_access('content ' . $data->type . ' comment update own') && $content = content_load($comment->ext_id, $data->type)) {
+      // 拥有编辑自己评论的权限
+      $comment->is_update = $GLOBALS['user']->uid == $content->uid;
+    }
+  }
+}
+
+/**
+ * @Implement of hook_comment_is_create()
+ */
+function content_comment_is_create($comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    if ($data->data['comment'] && $content = content_load($comment->ext_id, $data->type)) {
+      $comment->is_create = user_access('content ' . $data->type . ' comment create') && $content->status > 0;
+    }
+  }
+}
+
+/**
+ * @Implement of hook_comment_is_view()
+ */
+function content_comment_is_view($comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    $comment->is_view = false;
+    if (user_access('content ' . $data->type . ' view') 
+    && user_access('content ' . $data->type . ' comment view') 
+    && $content = content_load($comment->ext_id, $data->type)) {
+      $comment->is_view = $content->status > 0;
+    }
+  }
+}
+
+/**
+ * @Implement of hook_comment_form()
+ */
+function content_comment_form(&$form, &$comment) {
+  if ($data = content_get_comment_type($comment->ext_type)) {
+    if (!empty($comment->cid)) {
+      dd_set_tabs(array(
+        l(t('content', '编辑回复'), $_GET['q']),
+        l(t('content', '返回内容'), 'content/' . $data->type . '/' . $comment->ext_id)
+      ));
+    }
+  }
+}
+
+/**
+ * @Implement of hook_editor_info()
+ */
+function content_editor_info() {
+  $editor = array();
+
+  if (!$datas = content_get_type_by_type()) {
+    return false;
+  }
+  
+  $default = array(
+    'dom' => 'content_form_type_body',
+    'form_id' => 'content_form',
+    'form_field_name' => 'body',
+    'files' => array(
+      '#validate' => array(
+        'status' => 0,
+      )
+    ),
+    'config' => array(
+      'toolbar' => 'medium', 
+    ),
+  );
+
+  foreach ($datas as $key => $data) {
+    $editor['content_' . $key] = array(
+      'name' => $data->name,
+      'status' => 1, 
+      'data' => $default
+    );
+  }
+  
+  return $editor;
+}
+
+
