@@ -173,7 +173,23 @@ function content_admin_type_form($type = NULL) {
     '#description' => t('content', '每访问一次，计数 +1，将加重数据库负担'),
     '#options' => array(t('content', '否'), t('content', '是'))
   );
+  
+  $form['fields']['data']['title'] = array(
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#title' => t('content', 'Title 名称'),
+    '#default_value' => !empty($type->data) ? $type->data['title'] : t('content', '标题'),
+    '#description' => t('content', '内容表单 title 字段的可视名称，默认为：标题')
+  );
    
+  $form['fields']['data']['body'] = array(
+    '#type' => 'textfield',
+    '#required' => 1,
+    '#title' => t('content', 'Body 名称'),
+    '#default_value' => !empty($type->data) ? $type->data['body'] : t('content', '内容'),
+    '#description' => t('content', '内容表单 body 字段的可视名称，默认为：内容')
+  );
+  
   $form['fields']['tid'] = array(
     '#type' => 'hidden',
     '#default_value' => !empty($type->tid) ? $type->tid : 0,

@@ -61,7 +61,7 @@ function content_form($type, $content = NULL) {
   );
 
   $form['fields']['title'] = array(
-    '#title' => t('content', '标题'),
+    '#title' => $type->data['title'],
     '#type' => 'textfield',
     '#weight' => -100,
     '#default_value' => $content->title,
@@ -87,7 +87,7 @@ function content_form($type, $content = NULL) {
   );
   
   $form['fields']['body'] = array(
-    '#title' => t('content', '内容'),
+    '#title' => $type->data['body'],
     '#type' => 'textarea',
     '#default_value' => $content->body,
     '#required' => 1,

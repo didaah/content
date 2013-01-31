@@ -14,9 +14,12 @@ function content_admin_list($type) {
   dd_set_tabs(array(
     l(t('content', '!name管理', array('!name' => $type->name)), 'admin/content/list/' . $type->type),
     l(t('content', '添加内容'), 'content/add/' . $type->type, dd_get_redirect()),
-    l(t('content', '!name属性', array('!name' => $type->name)), 'admin/content/type/fields/' . $type->type),
   ));
   
+  if (user_access('admin content type')) {
+    dd_set_tabs(array(l(t('content', '!name属性', array('!name' => $type->name)), 'admin/content/type/fields/' . $type->type)));
+  }
+
   if (!empty($_GET['op']) && $_GET['op'] == 'delete') {
     if (user_access('content ' . $type->type . ' delete') && content_delete($type->type, $_GET['id'])) {
       echo 'tr';

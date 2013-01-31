@@ -51,7 +51,7 @@ function content_schema() {
     'primary key' => array('tid'),
   );
   
-  if (function_exists('content_get_type_by_type')) {
+  if (db_is_table('content_type') && function_exists('content_get_type_by_type')) {
     if ($data = content_get_type_by_type()) {
       /**
        * 内容存储表，为每个类型创建一个表
