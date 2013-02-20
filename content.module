@@ -553,8 +553,6 @@ function content_validate($content, &$form = NULL) {
     $e['title']['#error'][] = t('content', '长度不能大于 255 个字符');
   } else if (!$e = field_get_node_validate('content', 'ext_' . $content->type, $content)) {
     $e = module_invoke_all('content_validate', $content, $form);
-  } else {
-    return false;
   }
 
   return $e;
