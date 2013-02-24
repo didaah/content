@@ -79,3 +79,17 @@ function content_page($type, $content) {
   return theme('content', $content);
 }
 // }}}
+
+// public content_page_type($type) {{{ 
+/**
+ * content_page_type
+ * 内容类型列表浏览页面
+ * 
+ * @param object $type 
+ * @access public
+ * @return string
+ */
+function content_page_type($type) {
+
+}
+// }}}

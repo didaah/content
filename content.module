@@ -285,6 +285,20 @@ function content_is_delete($type, $content) {
 }
 // }}}
 
+// public content_is_type_view($type) {{{ 
+/**
+ * content_is_type_view
+ *  验证内容类型列表浏览权限
+ * 
+ * @param object $type 
+ * @access public
+ * @return bool
+ */
+function content_is_type_view($type) {
+  return user_access('content ' . $type->type . ' view');
+}
+// }}}
+
 /**
  * @Implement of hook_system_admin_menus()
  */
@@ -308,7 +322,40 @@ function content_system_admin_menus() {
 function content_field_term_view($term) {
   dd_set_title(array($term->field->name, $term->name));
   dd_set_breadcrumb(array(l($term->field->name, 'fields/' . $term->field->field_id), $term->name));
-  return article_list_summary(NULL, $term->tid);
+
+  if (!$type = content_type_load(substr($term->field->type, 4))) {
+    dd_get_access();
+  }
+  
+  $content = system_no_content();
+
+  $terms = array($term->tid => $term->name);
+
+  // 获取类别的所有子级
+  field_get_term_childrens($term->fid, field_get_cache_term_id($term->field->field_id), $terms);
+
+  $query = 'SELECT DISTINCT(ftn.nid), n.nid, n.title, n.created, n.updated FROM {content_ext_' . $type->type . '} n 
+  INNER JOIN {fields_term_node} ftn ON n.nid = ftn.nid';
+
+  $tids = array();
+  
+  foreach ($terms as $tid => $name) {
+    $tids[] = $tid;
+  }
+  
+  $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
+  $query .= ' ORDER BY n.created DESC';
+
+  if ($fetch = pager_query($query, 20)) {
+    $item = array();
+    foreach ($fetch as $o) {
+      $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
+    }
+    $content = theme('item_list', $item);
+    $content .= pager_view();
+  }
+
+  return $content;
 }
 
 /**
@@ -317,7 +364,36 @@ function content_field_term_view($term) {
 function content_field_view($field) {
   dd_set_title(array($field->name));
   dd_set_breadcrumb(array($field->name));
-  return article_list_summary($field->field_id);
+
+  if (!$type = content_type_load(substr($field->type, 4))) {
+    dd_get_access();
+  }
+  
+  $content = system_no_content();
+
+  if ($terms = field_get_cache_term_id($field->field_id)) {
+    $query = 'SELECT DISTINCT(ftn.nid), n.nid, n.title, n.created, n.updated FROM {content_ext_' . $type->type . '} n 
+    INNER JOIN {fields_term_node} ftn ON n.nid = ftn.nid';
+    $tids = array();
+    
+    foreach ($terms as $term) {
+      $tids[] = $term->tid;
+    }
+    
+    $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
+    $query .= ' ORDER BY n.created DESC';
+
+    if ($fetch = pager_query($query, 20)) {
+      $item = array();
+      foreach ($fetch as $o) {
+        $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
+      }
+      $content = theme('item_list', $item);
+      $content .= pager_view();
+    }
+  }
+
+  return $content;
 }
 
 // public content_type_load($tid) {{{ 
@@ -962,5 +1038,4 @@ function content_editor_info() {
   
   return $editor;
 }
-
 

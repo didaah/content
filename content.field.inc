@@ -88,7 +88,7 @@ function content_admin_type() {
             l('属性管理', 'admin/content/type/fields/' . $o->type)
           );
           $table[] = array(
-            l($o->name, 'content/' . $o->type . '/type/' . $o->tid),
+            l($o->name, 'content/type/' . $o->type),
             $o->type,
             $o->count,
             $o->comment ? t('content', '是') : t('content', '否'),
