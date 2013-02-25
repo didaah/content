@@ -592,7 +592,7 @@ function content_load($nid, $type) {
  * @return bool
  */
 function content_delete($type, $nid) {
-  if ($content = content_load($type, $nid)) {
+  if ($content = content_load($nid, $type)) {
     if (db_exec('DELETE FROM {content_ext_' . $type . '} WHERE nid = ?', array($nid))) {
 
       // 将内容所关联的文件状态设置为 0，待系统自行删除
