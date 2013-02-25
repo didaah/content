@@ -90,6 +90,13 @@ function content_page($type, $content) {
  * @return string
  */
 function content_page_type($type) {
+  dd_set_title(array($type->name));
 
+  if ($type->fetch = pager_query('SELECT * FROM {content_ext_' . $type->type . '} 
+  WHERE status > 0 ORDER BY updated DESC', 20)) {
+    $type->pager = pager_view();
+  }
+
+  return theme('content_type', $type);
 }
 // }}}

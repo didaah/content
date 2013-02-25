@@ -6,14 +6,14 @@
  * @param object $content 内容对象
  *
  * 模板文件加载优化级：
- *  content_{$content->type}_{$content->nid}.tpl.php
- *  content_{$content->type}.tpl.php
+ *  content_ext_{$content->type}_{$content->nid}.tpl.php
+ *  content_ext_{$content->type}.tpl.php
  *  content.tpl.php
  */
 
 ?>
 
-<div id="content_view_<?php echo $content->nid?>">
+<div class="content_view" id="content_view_<?php echo $content->nid?>">
 
   <h1 class="content_title"><?php echo $content->title?></h1>
 

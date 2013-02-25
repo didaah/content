@@ -735,15 +735,17 @@ function content_theme() {
  * @Implement of hook_template_preprocess_x()
  * 
  * 内容可按 type/nid 创建模板文件：
- * content_{$content->type}_{$content->nid}.tpl.php
- * content_{$content->type}.tpl.php
+ * content_ext_{$content->type}_{$content->nid}.tpl.php
+ * content_ext_{$content->type}.tpl.php
  * content.tpl.php
+ *
+ * 附加 ext，为避免与类型模板 content_type.tpl.php 冲突
  * 
  */
 function content_template_preprocess_content(&$var, $hook) {
   if (isset($var['content']) && $var['content']->type) {
-    $var['theme_config']->tpl[] = 'content_' . $var['content']->type . '_' . $var['content']->nid . '.tpl.php';
-    $var['theme_config']->tpl[] = 'content_' . $var['content']->type . '.tpl.php';
+    $var['theme_config']->tpl[] = 'content_ext_' . $var['content']->type . '_' . $var['content']->nid . '.tpl.php';
+    $var['theme_config']->tpl[] = 'content_ext_' . $var['content']->type . '.tpl.php';
   } 
 }
 
