@@ -469,8 +469,11 @@ function content_type_delete($type) {
  */
 function content_type_validate($v, &$form = NULL) {
   $e = NULL;
+  $v->type = trim($v->type);
   
-  if (mb_strlen($v->name) > 30) {
+  if ($v->type == 'type') {
+    $e['type']['#error'][] = t('content', '系统名称不能为：type');
+  } else if (mb_strlen($v->name) > 30) {
     $e['name']['#error'][] = t('content', '名称长度不超过 30 个字符');
   } else if (db_query('SELECT tid FROM {content_type} WHERE name = ? AND tid != ?',
   array($v->name, $v->tid), array('return' => 'column'))) {

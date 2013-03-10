@@ -5,14 +5,14 @@
  * @file 内容类型列表页面默认模板文件
  * @param object $type 内容类型对象
  *
- * 模板文件加载优化级：
+ * 模板文件加载顺序：
  *  content_type_{$type->type}.tpl.php
  *  content_type.tpl.php
  */
 
 ?>
 
-<div class="content_type_view">
+<div class="content_type_view content_type_<?php echo $type->type;?>_view">
 
   <h1 class="content_type_title"><?php echo $type->name?></h1>
 

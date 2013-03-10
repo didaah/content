@@ -5,7 +5,7 @@
  * @file 内容浏览页面默认模板文件
  * @param object $content 内容对象
  *
- * 模板文件加载优化级：
+ * 模板文件加载顺序：
  *  content_ext_{$content->type}_{$content->nid}.tpl.php
  *  content_ext_{$content->type}.tpl.php
  *  content.tpl.php
@@ -13,7 +13,7 @@
 
 ?>
 
-<div class="content_view" id="content_view_<?php echo $content->nid?>">
+<div class="content_view content_<?php echo $content->type;?>_view" id="content_view_<?php echo $content->nid?>">
 
   <h1 class="content_title"><?php echo $content->title?></h1>
 
@@ -34,11 +34,11 @@
     <?php endif?>
     
     <?php if ($content->is_update) : ?>
-    <?php echo l(t('content', '编辑'), 'cotnent/' . $content->type . '/' . $content->nid . '/edit', dd_get_redirect()); ?>
+    <?php echo l(t('content', '编辑'), 'content/' . $content->type . '/' . $content->nid . '/edit', dd_get_redirect()); ?>
     <?php endif?>
 
     <?php if ($content->is_delete) : ?>
-    <?php echo l(t('content', '删除'), 'cotnent/' . $content->type . '/' . $content->nid . '/delete'); ?>
+    <?php echo l(t('content', '删除'), 'content/' . $content->type . '/' . $content->nid . '/delete'); ?>
     <?php endif?>
   </div>
 
