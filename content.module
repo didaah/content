@@ -565,9 +565,9 @@ function content_load($nid, $type) {
   static $content;
   
   $key = $nid . $type;
-
+  
   if (!isset($content[$key])) {
-    if ($content[$key] = db_query('SELECT n.*, u.name FROM {content_ext_' . $type . '} n INNER JOIN {users} u 
+    if ($content[$key] = db_query('SELECT n.*, u.name FROM {content_ext_' . $type . '} n LEFT JOIN {users} u 
     ON n.uid = u.uid WHERE n.nid = ?', array($nid), array('return' => 'one'))) {
       $content[$key]->type = $type;
       $content[$key]->table = 'content_ext_' . $type;
@@ -625,7 +625,7 @@ function content_delete($type, $nid) {
  * @access public
  * @return bool|array 验证通过则返回 false，未通过返回一个适用 form 的错误信息数组
  */
-function content_validate($content, &$form = NULL) {
+function content_validate(&$content, &$form = NULL) {
   $e = NULL;
   
   if (mb_strlen($content->title) > 255) {
@@ -640,13 +640,13 @@ function content_validate($content, &$form = NULL) {
 
 /**
  * 保存一条文章
- * @param (object) $article
+ * @param object $content
  * 	文章记录，若有 nid，则更新记录
  * @param (bool) $validate
  * 	是否验证文章
  * @return (false|true) &$error 为验证错误信息
  */
-function content_save($content, $validate = true, &$error = NULL) {
+function content_save(&$content, $validate = true, &$error = NULL) {
   if ($validate && $error = content_validate($content)) {
     return false;
   }
@@ -666,9 +666,7 @@ function content_save($content, $validate = true, &$error = NULL) {
   if (db_write_record('content_ext_' . $content->type, $content, $args)) {
     // 扩展属性
     field_get_node_save('content', 'ext_' . $content->type, $content);
-
     content_set_type_count($content->type);
-
     module_invoke_all('content_save', $content);
     return true;
   }
