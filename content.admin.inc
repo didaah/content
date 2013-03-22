@@ -66,7 +66,7 @@ function content_admin_list($type) {
         format_date($o->created),
         format_date($o->updated),
         dd_imp(array(
-          l(t('content', '编辑'), 'content/' . $type->type . '/' .  $o->nid . '/edit', dd_get_redirect()),
+          l(t('content', '编辑'), 'content/' . $type->type . '/' .  $o->nid . '/edit', dd_get_redirect($_SERVER['REQUEST_URI'])),
           '<a href="' . $delete_url . '&id=' . $o->nid . '" class="confirmajax">' . t('content', '删除') . '</a>'
         ))
       );

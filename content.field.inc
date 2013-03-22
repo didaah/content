@@ -14,7 +14,7 @@ function content_admin_type() {
     l(t('content', '内容类型'), 'admin/content/type'),
     l(t('content', '添加类型'), 'admin/content/type/add'),
   );
-
+  
   $args = arg();
   
   switch ($args[3]) {
@@ -82,6 +82,7 @@ function content_admin_type() {
       if ($fetch = db_query('SELECT * FROM {content_type} ORDER BY tid ASC')) {
         $table = array();
         foreach ($fetch as $o) {
+          $o->data = unserialize($o->data);
           $links = array(
             l(t('content', '编辑'), 'admin/content/type/edit/' . $o->tid),
             l(t('content', '删除'), 'admin/content/type/delete/' . $o->tid, array('attributes' => array('class' => 'confirmajax'))),
@@ -91,7 +92,7 @@ function content_admin_type() {
             l($o->name, 'content/type/' . $o->type),
             $o->type,
             $o->count,
-            $o->comment ? t('content', '是') : t('content', '否'),
+            $o->data['comment'] ? t('content', '是') : t('content', '否'),
             dd_imp($links)
           );
         }
