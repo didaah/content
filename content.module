@@ -346,13 +346,14 @@ function content_field_term_view($term) {
   $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
   $query .= ' ORDER BY n.created DESC';
 
-  if ($fetch = pager_query($query, 20)) {
+  if ($term->fetch = pager_query($query, 20)) {
+    $field->pager = pager_view();
     $item = array();
-    foreach ($fetch as $o) {
+    foreach ($term->fetch as $o) {
       $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
     }
     $content = theme('item_list', $item);
-    $content .= pager_view();
+    $content .= $field->pager;
   }
 
   return $content;
@@ -383,13 +384,14 @@ function content_field_view($field) {
     $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
     $query .= ' ORDER BY n.created DESC';
 
-    if ($fetch = pager_query($query, 20)) {
+    if ($field->fetch = pager_query($query, 20)) {
+      $field->pager = pager_view();
       $item = array();
-      foreach ($fetch as $o) {
+      foreach ($field->fetch as $o) {
         $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
       }
       $content = theme('item_list', $item);
-      $content .= pager_view();
+      $content .= $field->pager;
     }
   }
 
