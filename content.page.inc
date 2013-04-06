@@ -93,7 +93,7 @@ function content_page_type($type) {
   dd_set_title(array($type->name));
 
   if ($type->fetch = pager_query('SELECT * FROM {content_ext_' . $type->type . '} 
-  WHERE status > 0 ORDER BY updated DESC', 20)) {
+  WHERE status > 0 ORDER BY created DESC', 20)) {
     $type->pager = pager_view();
   }
 
