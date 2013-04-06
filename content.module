@@ -326,7 +326,7 @@ function content_field_term_view($term) {
     dd_get_access();
   }
    
-  dd_set_title(array($term->field->name, $term->name, $type->name));
+  dd_set_title(array($term->name, $term->field->name, $type->name));
   dd_set_breadcrumb(array(l($term->field->name, 'fields/' . $term->field->field_id), $term->name));
   dd_set_html_head('<meta name="keywords" content="' . $term->name . '|' . $term->field->name . '|' . $type->name . '" />');
   dd_set_html_head('<meta name="description" content="' . $term->description . '" />');
