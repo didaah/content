@@ -321,13 +321,16 @@ function content_system_admin_menus() {
  * @Implement of hook_field_term_view()
  */
 function content_field_term_view($term) {
-  dd_set_title(array($term->field->name, $term->name));
-  dd_set_breadcrumb(array(l($term->field->name, 'fields/' . $term->field->field_id), $term->name));
 
   if (!$type = content_type_load(substr($term->field->type, 4))) {
     dd_get_access();
   }
-  
+   
+  dd_set_title(array($term->field->name, $term->name, $type->name));
+  dd_set_breadcrumb(array(l($term->field->name, 'fields/' . $term->field->field_id), $term->name));
+  dd_set_html_head('<meta name="keywords" content="' . $term->name . '|' . $term->field->name . '|' . $type->name . '" />');
+  dd_set_html_head('<meta name="description" content="' . $term->description . '" />');
+ 
   $content = system_no_content();
 
   $terms = array($term->tid => $term->name);
@@ -347,14 +350,17 @@ function content_field_term_view($term) {
   $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
   $query .= ' ORDER BY n.created DESC';
 
-  if ($term->fetch = pager_query($query, 20)) {
-    $field->pager = pager_view();
-    $item = array();
-    foreach ($term->fetch as $o) {
-      $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
+  if ($count = db_query(preg_replace('/SELECT.*?FROM/ims', 'SELECT DISTINCT(ftn.nid) FROM', $query), $args, 
+  array('return' => 'column'))) {
+    if ($term->fetch = pager_query($query, 20, 0, $count)) {
+      $field->pager = pager_view();
+      $item = array();
+      foreach ($term->fetch as $o) {
+        $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
+      }
+      $content = theme('item_list', $item);
+      $content .= $field->pager;
     }
-    $content = theme('item_list', $item);
-    $content .= $field->pager;
   }
 
   return $content;
@@ -364,13 +370,15 @@ function content_field_term_view($term) {
  * @Implement of hook_field_view()
  */
 function content_field_view($field) {
-  dd_set_title(array($field->name));
-  dd_set_breadcrumb(array($field->name));
-
   if (!$type = content_type_load(substr($field->type, 4))) {
     dd_get_access();
   }
   
+  dd_set_title(array($field->name, $type->name));
+  dd_set_breadcrumb(array($field->name));
+  dd_set_html_head('<meta name="keywords" content="' . $field->name . '|' . $type->name . "\" />\n");
+  dd_set_html_head('<meta name="description" content="' . $field->description . "\" />\n");
+
   $content = system_no_content();
 
   if ($terms = field_get_cache_term_id($field->field_id)) {
@@ -385,14 +393,17 @@ function content_field_view($field) {
     $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
     $query .= ' ORDER BY n.created DESC';
 
-    if ($field->fetch = pager_query($query, 20)) {
-      $field->pager = pager_view();
-      $item = array();
-      foreach ($field->fetch as $o) {
-        $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
+    if ($count = db_query(preg_replace('/SELECT.*?FROM/ims', 'SELECT DISTINCT(ftn.nid) FROM', $query), $args, 
+    array('return' => 'column'))) {
+      if ($field->fetch = pager_query($query, 20, 0, $count)) {
+        $field->pager = pager_view();
+        $item = array();
+        foreach ($field->fetch as $o) {
+          $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
+        }
+        $content = theme('item_list', $item);
+        $content .= $field->pager;
       }
-      $content = theme('item_list', $item);
-      $content .= $field->pager;
     }
   }
 
