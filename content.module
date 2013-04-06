@@ -28,6 +28,7 @@ function content_get_default_table() {
       'body' => array(
         'type' => 'text',
         'not null' => FALSE,
+        'size' => 'big',
         'description' => '内容'
       ),
       'uid' => array(
