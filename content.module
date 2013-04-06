@@ -350,7 +350,7 @@ function content_field_term_view($term) {
   $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
   $query .= ' ORDER BY n.created DESC';
 
-  if ($count = db_query(preg_replace('/SELECT.*?FROM/ims', 'SELECT DISTINCT(ftn.nid) FROM', $query), $args, 
+  if ($count = db_query(preg_replace('/SELECT.*?FROM/ims', 'SELECT COUNT(DISTINCT(ftn.nid)) FROM', $query), $args, 
   array('return' => 'column'))) {
     if ($term->fetch = pager_query($query, 20, 0, $count)) {
       $field->pager = pager_view();
@@ -393,7 +393,7 @@ function content_field_view($field) {
     $query .= ' WHERE n.status > 0 AND ftn.tid IN (' . implode(',', $tids) . ')';
     $query .= ' ORDER BY n.created DESC';
 
-    if ($count = db_query(preg_replace('/SELECT.*?FROM/ims', 'SELECT DISTINCT(ftn.nid) FROM', $query), $args, 
+    if ($count = db_query(preg_replace('/SELECT.*?FROM/ims', 'SELECT COUNT(DISTINCT(ftn.nid)) FROM', $query), $args, 
     array('return' => 'column'))) {
       if ($field->fetch = pager_query($query, 20, 0, $count)) {
         $field->pager = pager_view();
