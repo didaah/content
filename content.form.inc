@@ -129,11 +129,9 @@ function content_form_validate(&$form, &$v) {
 
 function content_form_submit(&$form, &$v) {
   if (content_save($v['_dida_values'], 0)) {
-    if (empty($v['_dida_values']->_db_write_record_is_update)) {
-      // 将文件关联到内容
-      db_exec('UPDATE {files} SET ext_type = ?, ext_id = ?, status = 1 WHERE ext_type = ?', 
-      array('content_' . $v['_dida_values']->type, $v['_dida_values']->nid, $form['#form_token']));
-    }
+    // 将文件关联到内容
+    db_exec('UPDATE {files} SET ext_type = ?, ext_id = ?, status = 1 WHERE ext_type = ?', 
+    array('content_' . $v['_dida_values']->type, $v['_dida_values']->nid, $form['#form_token']));
     dd_set_message(t('content', '操作成功'));
   } else {
     dd_set_message(t('content', '抱歉，出现异常，无法保存'), 'error');
