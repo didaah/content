@@ -2,6 +2,21 @@
 // $Id$
 
 /**
+ * @Implement of hook_update_x()
+ */
+function content_update_1() {
+  $field = array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'unsigned' => TRUE,
+    'default' => 0,
+    'description' => '导航字段',
+  );
+
+  return db_add_field('content_type', 'field_id', $field);
+}
+
+/**
  * @Implement of hook_schema()
  */
 function content_schema() {
@@ -33,6 +48,13 @@ function content_schema() {
         'unsigned' => TRUE,
         'default' => 0,
         'description' => '内容数量',
+      ),
+      'field_id' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => '导航字段',
       ),
       'data' => array(
         'type' => 'text',

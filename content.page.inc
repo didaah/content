@@ -21,12 +21,30 @@ function content_page($type, $content) {
 
   dd_set_title(array($content->title, $type->name));
 
+  $breadcrumb = array(l($type->name, 'content/type/' . $type->type));
+
   $content->body = filter_view($content->body, $content->format);
 
   if (!empty($content->fields)) {
+ 
+    // 读取设置为默认导航的字段
+    if (!empty($type->field_id)) {
+      foreach ($content->fields as $term) {
+        foreach ($term as $o) {
+          if ($o->field_id == $type->field_id) {
+            $breadcrumb[] = l($o->name, 'category/' . $o->tid);
+            break;
+          }
+        }
+      }
+    } 
+   
     field_get_node_view('content', 'ext_' . $content->type, $content, 2);
     $content->field_html = field_get_node_html('content', $content);
   }
+
+  $breadcrumb[] = $content->title;
+  dd_set_breadcrumb($breadcrumb);
 
   // 编辑权限
   $content->is_update = content_is_update($type, $content);

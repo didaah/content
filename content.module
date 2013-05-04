@@ -878,6 +878,59 @@ function content_field_call_group($type = NULL) {
 }
 
 /**
+ * @Implement of hook_field_call_save()
+ */
+function content_field_call_form($field, &$form) {
+  // 小组自定义字段
+  if ($field->module == 'content') {
+    if (in_array($field->field_type, array('checkbox', 'select', 'radio', 'selects'))) {
+      $form['fields']['is_menu'] = array(
+        '#title' => '导航',
+        '#default_value' => $field->is_menu,
+        '#type' => 'radio',
+        '#options' => array(0 => t('field', '否'), 1 => t('og', '是')),
+        '#weight' => -10,
+        '#description' => t('og', '将这个类别设为导航'),
+      );
+    }
+  }
+}
+
+/**
+ * @Implement of hook_field_call_save()
+ */
+function content_field_call_save($field) {
+  if ($field->module == 'content') {
+    // 将字段设为或取消导航
+    $type = str_replace('ext_', '', $field->type);
+    if (!empty($field->is_menu)) {
+      db_exec('UPDATE {content_type} SET field_id = ? WHERE type = ?', array($field->field_id, $type));
+    } else {
+      db_exec('UPDATE {content_type} SET field_id = 0 WHERE type = ?', array($type));
+    }
+    cache_del('cid', 'content_get_type_by_type');
+    cache_del('cid', 'content_get_type_by_tid');
+  }
+}
+
+/**
+ * @Implement of hook_field_call_save()
+ */
+function content_field_call_load($field, &$form) {
+  if ($field->module == 'content') {
+    if (in_array($field->field_type, array('checkbox', 'select', 'radio', 'selects'))) {
+      $type = str_replace('ext_', '', $field->type);
+      if (db_query('SELECT field_id FROM {content_type} WHERE type = ? AND field_id = ?',
+      array($type, $field->field_id), array('return' => 'column'))) {
+        $field->is_menu = 1; 
+      } else {
+        $field->is_menu = 0; 
+      }
+    }
+  }
+}
+
+/**
  * @Implement of hook_comment_info()
  */
 function content_comment_info() {
