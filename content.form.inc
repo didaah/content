@@ -132,6 +132,9 @@ function content_form_submit(&$form, &$v) {
     // 将文件关联到内容
     db_exec('UPDATE {files} SET ext_type = ?, ext_id = ?, status = 1 WHERE ext_type = ?', 
     array('content_' . $v['_dida_values']->type, $v['_dida_values']->nid, $form['#form_token']));
+    if ($v['_dida_values']->status > 0) {
+      $form['settings']['#redirect'] = url('content/' . $v['_dida_values']->type . '/' . $v['_dida_values']->nid);
+    }
     dd_set_message(t('content', '操作成功'));
   } else {
     dd_set_message(t('content', '抱歉，出现异常，无法保存'), 'error');
