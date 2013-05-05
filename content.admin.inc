@@ -20,13 +20,17 @@ function content_admin_list($type) {
     dd_set_tabs(array(l(t('content', '!name属性', array('!name' => $type->name)), 'admin/content/type/fields/' . $type->type)));
   }
 
-  if (!empty($_GET['op']) && $_GET['op'] == 'delete') {
+  if (!empty($_GET['op'])) {
+   if ($_GET['op'] == 'delete') {
     if (user_access('content ' . $type->type . ' delete') && content_delete($type->type, $_GET['id'])) {
       echo 'tr';
     } else {
       echo t('content', '您没有删除内容的权限');
     }
-    exit;
+   } else if ($_GET['op'] == 'status') {
+     db_exec('UPDATE {content_ext_' . $type->type . '} SET status = ? WHERE nid = ?', array($_POST['value'], $_GET['nid']));
+   }
+   exit;
   }
  
   $args = NULL;
@@ -62,7 +66,17 @@ function content_admin_list($type) {
         $o->name,
         $o->comment_count,
         $o->visit,
-        $o->status ? t('content', '已发布') : t('content', '未发布'),
+        dd_form_select(
+          array(
+            '#value' => $o->status,
+            '#attributes' => array(
+              'class' => 'changeconfirm dd_form_ajax_field',
+              'href' => url($_GET['q'], array('query' => 'op=status&nid=' . $o->nid))
+            ),
+            '#name' => 'content_status_' . $o->nid,
+            '#options' => array(t('content', '未发布'), t('content', '已发布'))
+          )
+        ),
         format_date($o->created),
         format_date($o->updated),
         dd_imp(array(

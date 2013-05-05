@@ -17,18 +17,20 @@
   <h1 class="content_type_title"><?php echo $type->name?></h1>
 
   <div class="content_type_view_content">
-<?php
-if (!empty($type->fetch)) {
-  $items = array();
-  foreach ($type->fetch as $o) {
-    $items[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
-  }
-  echo theme('item_list', $items, NULL, 'ul', array('class' => 'content_type_view_list'));
-  echo $type->pager;
-} else {
-  echo system_no_content();
-}
-?>
+    <?php
+    if (!empty($type->content)) {
+      echo $type->content;
+    } else if (!empty($type->fetch)) {
+      $items = array();
+      foreach ($type->fetch as $o) {
+        $items[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
+      }
+      echo theme('item_list', $items, NULL, 'ul', array('class' => 'content_type_view_list'));
+      echo $type->pager;
+    } else {
+      echo system_no_content();
+    }
+    ?>
   </div>
 
 </div>

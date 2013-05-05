@@ -110,9 +110,15 @@ function content_page($type, $content) {
 function content_page_type($type) {
   dd_set_title(array($type->name));
 
-  if ($type->fetch = pager_query('SELECT * FROM {content_ext_' . $type->type . '} 
-  WHERE status > 0 ORDER BY created DESC', 20)) {
-    $type->pager = pager_view();
+  // 可通过 hook_content_type_view() 自定义列表页
+  module_invoke_all('content_type_view', $type);
+
+  // 若没有模块定义列表页，则读取最新 20 条
+  if (empty($type->content)) {
+    if ($type->fetch = pager_query('SELECT * FROM {content_ext_' . $type->type . '} 
+    WHERE status > 0 ORDER BY created DESC', 20)) {
+      $type->pager = pager_view();
+    }
   }
 
   return theme('content_type', $type);

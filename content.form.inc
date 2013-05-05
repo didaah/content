@@ -134,8 +134,10 @@ function content_form_submit(&$form, &$v) {
     array('content_' . $v['_dida_values']->type, $v['_dida_values']->nid, $form['#form_token']));
     if ($v['_dida_values']->status > 0) {
       $form['settings']['#redirect'] = url('content/' . $v['_dida_values']->type . '/' . $v['_dida_values']->nid);
+      dd_set_message(t('content', '操作成功'));
+    } else {
+      dd_set_message(t('content', '操作成功，内容需要通过审核才能查看'));
     }
-    dd_set_message(t('content', '操作成功'));
   } else {
     dd_set_message(t('content', '抱歉，出现异常，无法保存'), 'error');
   }
