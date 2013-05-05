@@ -115,8 +115,8 @@ function content_page_type($type) {
 
   // 若没有模块定义列表页，则读取最新 20 条
   if (empty($type->content)) {
-    if ($type->fetch = pager_query('SELECT * FROM {content_ext_' . $type->type . '} 
-    WHERE status > 0 ORDER BY created DESC', 20)) {
+    if ($type->fetch = pager_query('SELECT n.*, u.name FROM {content_ext_' . $type->type . '} n INNER JOIN
+    {users} u ON n.uid = u.uid WHERE n.status > 0 ORDER BY n.created DESC', 20)) {
       $type->pager = pager_view();
     }
   }
