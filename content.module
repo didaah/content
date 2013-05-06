@@ -992,7 +992,7 @@ function content_comment_delete($comment) {
       'content/' . $data->type . '/' . $comment->ext_id
     );
     content_set_comment_count($data->type, $comment->ext_id);
-    $comment->redirect = 'content/' . $type . '/' . $comment->ext_id;
+    $comment->redirect = 'content/' . $data->type . '/' . $comment->ext_id;
   }
 }
 
