@@ -1061,6 +1061,15 @@ function content_comment_is_view($comment) {
 }
 
 /**
+ * @Implement of hook_comment_is_type_view()
+ */
+function content_comment_is_type_view($type) {
+  if ($data = content_get_comment_type($type->ext_type)) {
+    $type->is_view = user_access('content ' . $data->type . ' view') && user_access('content ' . $data->type . ' comment view'); 
+  }
+}
+
+/**
  * @Implement of hook_comment_form()
  */
 function content_comment_form(&$form, &$comment) {

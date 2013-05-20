@@ -191,6 +191,8 @@ function content_admin_type_form($type = NULL) {
     '#description' => t('content', '内容表单 body 字段的可视名称，默认为：内容')
   );
   
+  $form['fields']['data']['meta'] = dd_get_form_meta('asc', $type->data ? $type->data['meta'] : array());
+
   $form['fields']['tid'] = array(
     '#type' => 'hidden',
     '#default_value' => !empty($type->tid) ? $type->tid : 0,

@@ -110,6 +110,10 @@ function content_page($type, $content) {
 function content_page_type($type) {
   dd_set_title(array($type->name));
 
+  if (!empty($type->data['meta'])) {
+    dd_set_meta($type->data['meta']);
+  }
+
   // 可通过 hook_content_type_view() 自定义列表页
   module_invoke_all('content_type_view', $type);
 
@@ -119,6 +123,7 @@ function content_page_type($type) {
     {users} u ON n.uid = u.uid WHERE n.status > 0 ORDER BY n.created DESC', 20)) {
       $type->pager = pager_view();
     }
+    dd_set_breadcrumb(array($type->name));
   }
 
   return theme('content_type', $type);
