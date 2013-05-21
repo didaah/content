@@ -82,7 +82,7 @@ function content_form($type, $content = NULL) {
    
   $form['fields']['uid'] = array(
     '#type' => 'hidden',
-    '#default_value' => !empty($content->uid) ? $content->uid : $GLOBALS['user']->uid,
+    '#default_value' => isset($content->uid) ? $content->uid : $GLOBALS['user']->uid,
     '#constant' => 1,
   );
   
