@@ -338,7 +338,7 @@ function content_field_term_view($term) {
   // 获取类别的所有子级
   field_get_term_childrens($term->fid, field_get_cache_term_id($term->field->field_id), $terms);
 
-  $query = 'SELECT DISTINCT(ftn.nid), n.nid, n.title, n.created, n.updated FROM {content_ext_' . $type->type . '} n 
+  $query = 'SELECT DISTINCT(ftn.nid), n.* FROM {content_ext_' . $type->type . '} n 
   INNER JOIN {fields_term_node} ftn ON n.nid = ftn.nid';
 
   $tids = array();
@@ -382,7 +382,7 @@ function content_field_view($field) {
   $content = system_no_content();
 
   if ($terms = field_get_cache_term_id($field->field_id)) {
-    $query = 'SELECT DISTINCT(ftn.nid), n.nid, n.title, n.created, n.updated FROM {content_ext_' . $type->type . '} n 
+    $query = 'SELECT DISTINCT(ftn.nid), n.nid, n.* FROM {content_ext_' . $type->type . '} n 
     INNER JOIN {fields_term_node} ftn ON n.nid = ftn.nid';
     $tids = array();
     
