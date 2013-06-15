@@ -256,7 +256,7 @@ function content_is_update($type, $content) {
   if (user_access('content ' . $type->type . ' update') || 
   (user_access('content ' . $type->type . ' update own') && $GLOBALS['user']->uid == $content->uid)) {
     $content->is_update = true;
-    // 若将 $content->is_udpate 设为 false，则不允许编辑
+    // 若将 $content->is_update 设为 false，则不允许编辑
     module_invoke_all('content_is_update', $content);  
     return $content->is_update;
   }
@@ -1025,7 +1025,7 @@ function content_comment_is_delete($comment) {
  */
 function content_comment_is_update($comment) {
   if ($data = content_get_comment_type($comment->ext_type)) {
-    if (user_access('content ' . $data->type . ' comment udpate')) {
+    if (user_access('content ' . $data->type . ' comment update')) {
       // 拥有编辑所有评论的权限
       $comment->is_update = true;
     } else if (user_access('content ' . $data->type . ' comment update own') && $content = content_load($comment->ext_id, $data->type)) {
