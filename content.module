@@ -526,15 +526,20 @@ function content_type_save($v, &$form = NULL) {
   } else {
     $args = NULL;
   }
-  
+
   if (db_write_record('content_type', $v, $args)) {
     if (!empty($v->type) && !content_create_table($v)) {
       dd_set_message(t('content', '数据表未能创建成功，请再次编辑，尝试重新创建'), 'error');
     } else {
       // 清除缓存
       content_system_cache_clear('submit', array('value' => array('content_type' => true)));
-      module_invoke_all('content_type_save', $type, $form);
+      
+      $v->type = db_query('SELECT type FROM {content_type} WHERE tid = ?',
+        array($v->tid), array('return' => 'column'));
+
+      module_invoke_all('content_type_save', $v, $form);
       dd_set_message(t('content', '操作成功'));
+
       return true;
     }
   }
