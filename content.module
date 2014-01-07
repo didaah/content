@@ -359,7 +359,7 @@ function content_field_term_view($term) {
         $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
       }
       $content = theme('item_list', $item);
-      $content .= $field->pager;
+      $content .= $term->pager;
     }
   }
 
