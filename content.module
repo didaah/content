@@ -353,7 +353,7 @@ function content_field_term_view($term) {
   if ($count = db_query(preg_replace('/SELECT.*?FROM/ims', 'SELECT COUNT(DISTINCT(ftn.nid)) FROM', $query), $args, 
   array('return' => 'column'))) {
     if ($term->fetch = pager_query($query, 20, 0, $count)) {
-      $field->pager = pager_view();
+      $term->pager = pager_view();
       $item = array();
       foreach ($term->fetch as $o) {
         $item[] = l($o->title, 'content/' . $type->type . '/' . $o->nid);
@@ -526,7 +526,6 @@ function content_type_save($v, &$form = NULL) {
   } else {
     $args = NULL;
   }
-
   if (db_write_record('content_type', $v, $args)) {
     if (!empty($v->type) && !content_create_table($v)) {
       dd_set_message(t('content', '数据表未能创建成功，请再次编辑，尝试重新创建'), 'error');
