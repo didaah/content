@@ -1005,7 +1005,13 @@ function content_comment_delete($comment) {
  */
 function content_comment_save($comment) {
   if ($data = content_get_comment_type($comment->ext_type)) {
-    content_set_comment_count($data->type, $comment->ext_id);
+    $count = content_set_comment_count($data->type, $comment->ext_id);
+    if (empty($comment->redirect)) {
+      $comment->redirect = url($_GET['q'], array(
+        'query' => 'page=' . ceil($count/20),
+        'fragment' => 'comment_' . $comment->ext_type . '_' . $comment->cid
+      ));
+    }
   }
 }
 
