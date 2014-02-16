@@ -35,20 +35,22 @@ function content_form($type, $content = NULL) {
     }
   }
   
-  $tabs = array();
+  if (empty($content->hide_tabs)) {
+    $tabs = array();
 
-  if (user_access('admin content view')) {
-    $tabs[] = l(t('content', '!name管理', array('!name' => $data->name)), 'admin/content/list/' . $data->type);
+    if (user_access('admin content view')) {
+      $tabs[] = l(t('content', '!name管理', array('!name' => $data->name)), 'admin/content/list/' . $data->type);
+    }
+
+    if (empty($content->nid)) {
+      $tabs[] = l(t('content', '添加内容'), 'content/add/' . $content->type);
+    } else {
+      $tabs[] = l(t('content', '编辑内容'), 'content/' . $content->type . '/' . $content->nid . '/edit');
+      $tabs[] = l(t('content', '浏览内容'), 'content/' . $content->type . '/' . $content->nid);
+    }
+
+    dd_set_tabs($tabs);
   }
-
-  if (empty($content->nid)) {
-    $tabs[] = l(t('content', '添加内容'), 'content/add/' . $content->type);
-  } else {
-    $tabs[] = l(t('content', '编辑内容'), 'content/' . $content->type . '/' . $content->nid . '/edit');
-    $tabs[] = l(t('content', '浏览内容'), 'content/' . $content->type . '/' . $content->nid);
-  }
-
-  dd_set_tabs($tabs);
 
   $form = array(
     'fields' => array(),
@@ -133,7 +135,11 @@ function content_form_submit(&$form, &$v) {
     db_exec('UPDATE {files} SET ext_type = ?, ext_id = ?, status = 1 WHERE ext_type = ?', 
     array('content_' . $v['_dida_values']->type, $v['_dida_values']->nid, $form['#form_token']));
     if ($v['_dida_values']->status > 0) {
-      $form['settings']['#redirect'] = url('content/' . $v['_dida_values']->type . '/' . $v['_dida_values']->nid);
+      if (!empty($v['_dida_values']->redirect)) {
+        $form['settings']['#redirect'] = $v['_dida_values']->redirect;
+      } else if (empty($form['settings']['#redirect'])) {
+        $form['settings']['#redirect'] = url('content/' . $v['_dida_values']->type . '/' . $v['_dida_values']->nid);
+      }
       dd_set_message(t('content', '操作成功'));
     } else {
       dd_set_message(t('content', '操作成功，内容需要通过审核才能查看'));
