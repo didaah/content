@@ -1008,7 +1008,7 @@ function content_comment_save($comment) {
     $count = content_set_comment_count($data->type, $comment->ext_id);
     if (empty($comment->redirect)) {
       $comment->redirect = url($_GET['q'], array(
-        'query' => 'page=' . floor($count/20),
+        'query' => 'page=' . floor(($count-1)/20),
         'fragment' => 'comment_' . $comment->ext_type . '_' . $comment->cid
       ));
     }
